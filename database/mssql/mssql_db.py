@@ -89,22 +89,21 @@ else:
 
 
 def db_exists(conn, cursor, db):
-    query = "SELECT name FROM master.sys.databases WHERE name = N'%s'" % db
-    cursor.execute(query)
+    cursor.execute("SELECT name FROM master.sys.databases WHERE name = N'%s'", db)
     conn.commit()
     return bool(cursor.rowcount)
 
 
 def db_create(conn, cursor, db):
     conn.autocommit(True)
-    cursor.execute("CREATE DATABASE %s" % db)
+    cursor.execute("CREATE DATABASE %s", db)
     conn.autocommit(False)
     return db_exists(conn, cursor, db)
 
 
 def db_delete(conn, cursor, db):
     conn.autocommit(True)
-    cursor.execute("DROP DATABASE %s" % db)
+    cursor.execute("DROP DATABASE %s", db)
     conn.autocommit(False)
     return not db_exists(conn, cursor, db)
 
