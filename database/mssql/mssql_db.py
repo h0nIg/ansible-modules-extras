@@ -111,14 +111,14 @@ def db_delete(conn, cursor, db):
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
         with open(target, 'r') as backup:
-            sqlQuery = "USE %s\n" % db
+            sqlQuery = "USE %s\n"
             for line in backup:
                 if line.startswith('GO'):
-                    cursor.execute(sqlQuery)
-                    sqlQuery = "USE %s\n" % db
+                    cursor.execute(sqlQuery, db)
+                    sqlQuery = "USE %s\n"
                 else:
                     sqlQuery = sqlQuery + line
-            cursor.execute(sqlQuery)
+            cursor.execute(sqlQuery, db)
             conn.commit()
         return 0, "Import Successful", ""
     else:
