@@ -63,7 +63,7 @@ Try {
         }
 
         If (-not $svc) {
-            New-Service -Name $name -BinaryPathName $path
+            New-Service -Name $name -BinaryPathName "$path"
 
             # refresh variable
             $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
@@ -74,7 +74,7 @@ Try {
             # remove and create service, since its not possible to change path name
             $svc.delete()
 
-            New-Service -Name $name -BinaryPathName $path
+            New-Service -Name $name -BinaryPathName "$path"
 
             $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
             Set-Attr $result "changed" $true;
@@ -91,7 +91,7 @@ Try {
             $encryptedPassword = ConvertTo-SecureString $password -AsPlainText -Force
             $credentials = New-Object System.Management.Automation.PSCredential ($fullUser, $encryptedPassword)
 
-            New-Service -Name $name -BinaryPathName $path -Credential $credentials
+            New-Service -Name $name -BinaryPathName "$path" -Credential $credentials
 
             $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
             Set-Attr $result "changed" $true;
