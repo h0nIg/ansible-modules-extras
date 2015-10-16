@@ -79,7 +79,7 @@ Try {
             $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
             Set-Attr $result "changed" $true;
         }
-        If (($user -ne "") -And ($password -ne "")) {
+        If ($user -ne "") {
             # remove and create service, since its not possible to change credentials
             $svc.delete()
 
