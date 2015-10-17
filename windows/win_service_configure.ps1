@@ -25,23 +25,7 @@ $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
 $name = Get-Attr $params "name" -failifempty $true
-$state = Get-Attr $params "state" "present"
-$path = Get-Attr $params "path" ""
-
-$user = Get-Attr $params "user" ""
-$password = Get-Attr $params "password" ""
-
-$startMode = Get-Attr $params "start_mode" "auto"
-$displayName = Get-Attr $params "display_name" $name
-$description = Get-Attr $params "description" ""
-$dependencies = Get-Attr $params "dependencies" ""
-
-If ($state) {
-    $state = $state.ToString().ToLower()
-    If (($state -ne 'present') -and ($state -ne 'absent')) {
-        Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
-    }
-}
+$state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
 
 Try {
     $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
@@ -52,16 +36,18 @@ Try {
         }
     }
     Else {
-        If ($path -eq "") {
-            Fail-Json $result "state is present, path must be informed"
-        }
-        If ($startMode) {
-            $startMode = $startMode.ToString().ToLower()
-            If (($startMode -ne 'auto') -and ($startMode -ne 'manual') -and ($startMode -ne 'disabled')) {
-                Fail-Json $result "start mode is '$startMode'; must be 'auto', 'manual', or 'disabled'"
-            }
-        }
+        # variables
+        $path = Get-Attr $params "path" -failifempty $true
 
+        $user = Get-Attr $params "user" ""
+        $password = Get-Attr $params "password" ""
+
+        $startMode = Get-Attr $params "start_mode" "auto" -validateSet "auto","manual","disabled" -resultobj $result
+        $displayName = Get-Attr $params "display_name" $name
+        $description = Get-Attr $params "description" ""
+        $dependencies = Get-Attr $params "dependencies" ""
+
+        # if service does not exist, create it first with minimal informations
         If (-not $svc) {
             New-Service -Name $name -BinaryPathName "$path"
 
