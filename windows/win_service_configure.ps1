@@ -32,9 +32,9 @@ $user = Get-Attr $params "user" ""
 $password = Get-Attr $params "password" ""
 
 $startMode = Get-Attr $params "start_mode" "auto"
-
 $displayName = Get-Attr $params "display_name" $name
-$description = Get-Attr $params "description" $null
+$description = Get-Attr $params "description" ""
+$dependencies = Get-Attr $params "dependencies" ""
 
 If ($state) {
     $state = $state.ToString().ToLower()
@@ -70,43 +70,52 @@ Try {
             Set-Attr $result "changed" $true;
         }
 
-        If ($svc.PathName -ne $path) {
-            # remove and create service, since its not possible to change path name
-            $svc.delete()
-
-            New-Service -Name $name -BinaryPathName "$path"
-
-            $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
+        $servicePathName = $svc.PathName
+        $serviceStartMode = $svc.StartMode.ToLower()
+        $serviceDisplayName = $svc.DisplayName
+        $serviceDescription = $svc.Description
+        $serviceDependencies = ((Get-Service $name).RequiredServices | %{$_.Name}) -join ','
+        
+        If ($servicePathName -ne $path) {
+            $servicePathName = $path
             Set-Attr $result "changed" $true;
         }
-        If ($user -ne "") {
-            # remove and create service, since its not possible to change credentials
-            $svc.delete()
-
+        If ($svc.StartName -ne $user) {
             $fullUser = $user
-            if ($user.Split("\").count -eq 1) {
+            if (Not($user -contains "@") -And ($user.Split("\").count -eq 1)) {
                 $fullUser = $env:COMPUTERNAME + "\" + $user
             }
 
             $encryptedPassword = ConvertTo-SecureString $password -AsPlainText -Force
             $credentials = New-Object System.Management.Automation.PSCredential ($fullUser, $encryptedPassword)
 
-            New-Service -Name $name -BinaryPathName "$path" -Credential $credentials
+            Set-Attr $result "changed" $true;
+        }
+        If ($serviceStartMode -ne $startMode) {
+            $serviceStartMode = $startMode
+            Set-Attr $result "changed" $true;
+        }
+        If ($serviceDisplayName -ne $displayName) {
+            $serviceDisplayName = $displayName
+            Set-Attr $result "changed" $true;
+        }
+        If ($serviceDescription -ne $description) {
+            $serviceDescription = $description
+            Set-Attr $result "changed" $true;
+        }
+        If ($serviceDependencies -ne $dependencies) {
+            $serviceDependencies = $dependencies
+            Set-Attr $result "changed" $true;
+        }
 
-            $svc = Get-WmiObject -Class Win32_Service -Filter "Name='$name'"
-            Set-Attr $result "changed" $true;
+        # remove and create service, since its not possible to change some attributes (path, credentials and dependencies)
+        $svc.delete()
+
+        If ($credentials -ne $null) {
+            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies"
         }
-        If ($svc.StartMode.ToLower() -ne $startMode) {
-            Set-Service -Name $name -StartupType $startMode
-            Set-Attr $result "changed" $true;
-        }
-        If ($svc.DisplayName -ne $displayName) {
-            Set-Service -Name $name -DisplayName $displayName
-            Set-Attr $result "changed" $true;
-        }
-        If ($svc.Description -ne $description) {
-            Set-Service -Name $name -Description $description
-            Set-Attr $result "changed" $true;
+        Else {
+            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies" -Credential $credentials
         }
     }
 }
