@@ -60,7 +60,7 @@ options:
     description:
       - Name to be used for service list
     required: false
-    default: If empty, name is used.
+    default: If empty, I(name) is used.
   description:
     description:
       - Description to be used for service list
@@ -68,7 +68,7 @@ options:
     default: none
   user:
     description:
-      - User to be used for service startup. Required if state is present.
+      - User to be used for service startup
     required: false
     default: none
   password:
@@ -76,7 +76,12 @@ options:
       - Password to be used for service startup
     required: false
     default: none
-author: Hans-Joachim Kliemeck
+  dependencies:
+    description:
+      - Service dependencies that has to be started to trigger startup
+    required: false
+    default: []
+author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = '''
