@@ -33,15 +33,16 @@ options:
     description:
       - Name of the service
     required: true
-    default: null
+    default: none
   start_mode:
     description:
-      - Set the startup type for the service
+      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it. C(disabled) means that the service will stay off, regardless if it is needed or not.
     required: false
     choices:
       - auto
       - manual
       - disabled
+    default: auto
   state:
     description:
       - Indicates the desired service state
@@ -54,32 +55,27 @@ options:
     description:
       - Path to be used for service startup. Required if state is present.
     required: false
+    default: none
   display_name:
     description:
-      - Name to be used for service list.
+      - Name to be used for service list
     required: false
-    default: name
+    default: If empty, name is used.
   description:
     description:
       - Description to be used for service list
     required: false
+    default: none
   user:
     description:
       - User to be used for service startup. Required if state is present.
     required: false
+    default: none
   password:
     description:
       - Password to be used for service startup
     required: false
-  start_mode:
-    description:
-      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it. C(disabled) means that the service will stay off, regardless if it is needed or not.
-    required: false
-    choices:
-      - auto
-      - manual
-      - disabled
-    default: auto
+    default: none
 author: Hans-Joachim Kliemeck
 '''
 
