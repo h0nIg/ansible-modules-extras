@@ -57,6 +57,7 @@ Try {
         }
 
         $servicePathName = $svc.PathName
+        $serviceCredentials = $null
         $serviceStartMode = $svc.StartMode.ToLower()
         $serviceDisplayName = $svc.DisplayName
         $serviceDescription = $svc.Description
@@ -68,14 +69,16 @@ Try {
         }
         If ($svc.StartName -ne $user) {
             $fullUser = $user
-            if (Not($user -contains "@") -And ($user.Split("\").count -eq 1)) {
+            If (-Not($user -contains "@") -And ($user.Split("\").count -eq 1)) {
                 $fullUser = $env:COMPUTERNAME + "\" + $user
             }
 
-            $encryptedPassword = ConvertTo-SecureString $password -AsPlainText -Force
-            $credentials = New-Object System.Management.Automation.PSCredential ($fullUser, $encryptedPassword)
+            If ($svc.StartName -ne $fullUser) {
+                $encryptedPassword = ConvertTo-SecureString $password -AsPlainText -Force
+                $serviceCredentials = New-Object System.Management.Automation.PSCredential ($fullUser, $encryptedPassword)
 
-            Set-Attr $result "changed" $true;
+                Set-Attr $result "changed" $true;
+            }
         }
         If ($serviceStartMode -ne $startMode) {
             $serviceStartMode = $startMode
@@ -97,11 +100,11 @@ Try {
         # remove and create service, since its not possible to change some attributes (path, credentials and dependencies)
         $svc.delete()
 
-        If ($credentials -ne $null) {
-            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies"
+        If ($serviceCredentials -ne $null) {
+            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies" -Credential $serviceCredentials
         }
         Else {
-            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies" -Credential $credentials
+            New-Service -Name $name -BinaryPathName "$servicePathName" -StartupType $serviceStartMode -DisplayName "$serviceDisplayName" -Description "$serviceDescription" -DependsOn "$serviceDependencies"
         }
     }
 }
