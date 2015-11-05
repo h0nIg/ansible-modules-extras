@@ -69,7 +69,7 @@ Try {
         }
         If ($svc.StartName -ne $user) {
             $fullUser = $user
-            If (-Not($user -contains "@") -And ($user.Split("\").count -eq 1)) {
+            If (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
                 $fullUser = $env:COMPUTERNAME + "\" + $user
             }
 
