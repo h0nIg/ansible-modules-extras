@@ -103,6 +103,11 @@ def db_create(conn, cursor, db):
 
 def db_delete(conn, cursor, db):
     conn.autocommit(True)
+    try:
+        single_user = "alter database %s set single_user with rollback immediate" % db
+        cursor.execute(single_user)
+    except:
+        pass
     cursor.execute("DROP DATABASE %s", db)
     conn.autocommit(False)
     return not db_exists(conn, cursor, db)
@@ -113,16 +118,18 @@ def db_import(conn, cursor, module, db, target):
         with open(target, 'r') as backup:
             sqlQuery = "USE %s\n"
             for line in backup:
-                if line.startswith('GO'):
+                if line is None:
+                    break
+                elif line.startswith('GO'):
                     cursor.execute(sqlQuery, db)
                     sqlQuery = "USE %s\n"
                 else:
-                    sqlQuery = sqlQuery + line
+                    sqlQuery += line
             cursor.execute(sqlQuery, db)
             conn.commit()
-        return 0, "Import Successful", ""
+        return 0, "import successful", ""
     else:
-        module.fail_json(msg="cannot find target file")
+        return 1, "cannot find target file", "cannot find target file"
 
 
 def main():
@@ -140,7 +147,7 @@ def main():
     )
 
     if not mssql_found:
-        module.fail_json(msg="the python pymssql module is required")
+        module.fail_json(msg="pymssql python module is required")
 
     db = module.params['name']
     state = module.params['state']
