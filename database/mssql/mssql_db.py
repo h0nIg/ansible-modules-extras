@@ -26,7 +26,7 @@ module: mssql_db
 short_description: Add or remove MSSQL databases from a remote host.
 description:
    - Add or remove MSSQL databases from a remote host.
-version_added: "1.8"
+version_added: "2.1"
 options:
   name:
     description:
@@ -206,4 +206,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
+
