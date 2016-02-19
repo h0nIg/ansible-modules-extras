@@ -166,7 +166,10 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-    login_querystring = "%s:%s" % (login_host, login_port)
+    
+    login_querystring = login_host
+    if login_port != "1433":
+        login_querystring = "%s:%s" % (login_host, login_port)
 
     if login_user != "" and login_password == "":
         module.fail_json(msg="when supplying login_user arguments login_password must be provided")
@@ -179,7 +182,7 @@ def main():
                 errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your @sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
 
     conn.autocommit(True)
     changed = False
