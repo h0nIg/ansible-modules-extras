@@ -64,6 +64,12 @@ options:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) files are supported.
     required: false
+  autocommit:
+    description:
+      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed within a transaction.
+    required: false
+    default: false
+    choices: [ "false", "true" ]
 notes:
    - Requires the pymssql Python package on the remote host. For Ubuntu, this
      is as easy as pip install pymssql (See M(pip).)
@@ -95,20 +101,16 @@ def db_exists(conn, cursor, db):
 
 
 def db_create(conn, cursor, db):
-    conn.autocommit(True)
     cursor.execute("CREATE DATABASE [%s]" % db)
-    conn.autocommit(False)
     return db_exists(conn, cursor, db)
 
 
 def db_delete(conn, cursor, db):
-    conn.autocommit(True)
     try:
         cursor.execute("ALTER DATABASE [%s] SET single_user WITH ROLLBACK IMMEDIATE" % db)
     except:
         pass
     cursor.execute("DROP DATABASE [%s]" % db)
-    conn.autocommit(False)
     return not db_exists(conn, cursor, db)
 
 
@@ -140,6 +142,7 @@ def main():
             login_host=dict(required=True),
             login_port=dict(default='1433'),
             target=dict(default=None),
+            autocommit=dict(type='bool', default=False),
             state=dict(
                 default='present', choices=['present', 'absent', 'import'])
         )
@@ -150,6 +153,7 @@ def main():
 
     db = module.params['name']
     state = module.params['state']
+    autocommit = module.params['autocommit']
     target = module.params["target"]
 
     login_user = module.params['login_user']
@@ -171,7 +175,9 @@ def main():
         else:
                 module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
 
+    conn.autocommit(True)
     changed = False
+
     if db_exists(conn, cursor, db):
         if state == "absent":
             try:
@@ -179,7 +185,9 @@ def main():
             except Exception, e:
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "import":
+            conn.autocommit(autocommit)
             rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
             else:
@@ -195,7 +203,10 @@ def main():
                 changed = db_create(conn, cursor, db)
             except Exception, e:
                 module.fail_json(msg="error creating database: " + str(e))
+
+            conn.autocommit(autocommit)
             rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
             else:
