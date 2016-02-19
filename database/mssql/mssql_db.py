@@ -85,6 +85,10 @@ EXAMPLES = '''
 - mssql_db: name=my_db state=import target=/tmp/dump.sql
 '''
 
+RETURN  = '''
+#
+'''
+
 import os
 try:
     import pymssql
@@ -113,10 +117,10 @@ def db_delete(conn, cursor, db):
     cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)
 
-
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
-        with open(target, 'r') as backup:
+        backup = open(target, 'r')
+        try:
             sqlQuery = "USE [%s]\n" % db
             for line in backup:
                 if line is None:
@@ -128,6 +132,8 @@ def db_import(conn, cursor, module, db, target):
                     sqlQuery += line
             cursor.execute(sqlQuery)
             conn.commit()
+        finally:
+            backup.close()
         return 0, "import successful", ""
     else:
         return 1, "cannot find target file", "cannot find target file"
