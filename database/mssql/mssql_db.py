@@ -89,14 +89,14 @@ else:
 
 
 def db_exists(conn, cursor, db):
-    cursor.execute("SELECT name FROM master.sys.databases WHERE name = N'%s'", db)
+    cursor.execute("SELECT name FROM master.sys.databases WHERE name = %s", db)
     conn.commit()
     return bool(cursor.rowcount)
 
 
 def db_create(conn, cursor, db):
     conn.autocommit(True)
-    cursor.execute("CREATE DATABASE %s", db)
+    cursor.execute("CREATE DATABASE [%s]" % db)
     conn.autocommit(False)
     return db_exists(conn, cursor, db)
 
@@ -104,11 +104,10 @@ def db_create(conn, cursor, db):
 def db_delete(conn, cursor, db):
     conn.autocommit(True)
     try:
-        single_user = "alter database %s set single_user with rollback immediate" % db
-        cursor.execute(single_user)
+        cursor.execute("ALTER DATABASE [%s] SET single_user WITH ROLLBACK IMMEDIATE" % db)
     except:
         pass
-    cursor.execute("DROP DATABASE %s", db)
+    cursor.execute("DROP DATABASE [%s]" % db)
     conn.autocommit(False)
     return not db_exists(conn, cursor, db)
 
@@ -116,16 +115,16 @@ def db_delete(conn, cursor, db):
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
         with open(target, 'r') as backup:
-            sqlQuery = "USE %s\n"
+            sqlQuery = "USE [%s]\n" % db
             for line in backup:
                 if line is None:
                     break
                 elif line.startswith('GO'):
                     cursor.execute(sqlQuery, db)
-                    sqlQuery = "USE %s\n"
+                    sqlQuery = "USE [%s]\n" % db
                 else:
                     sqlQuery += line
-            cursor.execute(sqlQuery, db)
+            cursor.execute(sqlQuery)
             conn.commit()
         return 0, "import successful", ""
     else:
