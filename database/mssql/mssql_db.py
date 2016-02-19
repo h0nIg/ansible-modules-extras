@@ -136,10 +136,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['db']),
-            login_user=dict(required=True),
-            login_password=dict(required=True),
+            login_user=dict(default=''),
+            login_password=dict(default=''),
             login_host=dict(required=True),
-            login_port=dict(default="1433"),
+            login_port=dict(default='1433'),
             target=dict(default=None),
             state=dict(
                 default='present', choices=['present', 'absent', 'import'])
@@ -159,8 +159,8 @@ def main():
     login_port = module.params['login_port']
     login_querystring = "%s:%s" % (login_host, login_port)
 
-    if login_password is None or login_user is None:
-        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+    if login_user != "" and login_password == "":
+        module.fail_json(msg="when supplying login_user arguments login_password must be provided")
 
     try:
         conn = pymssql.connect(user=login_user, password=login_password, host=login_querystring, database='master')
