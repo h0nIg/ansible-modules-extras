@@ -126,7 +126,7 @@ def db_import(conn, cursor, module, db, target):
                 if line is None:
                     break
                 elif line.startswith('GO'):
-                    cursor.execute(sqlQuery, db)
+                    cursor.execute(sqlQuery)
                     sqlQuery = "USE [%s]\n" % db
                 else:
                     sqlQuery += line
