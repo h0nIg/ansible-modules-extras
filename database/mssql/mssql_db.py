@@ -26,7 +26,7 @@ module: mssql_db
 short_description: Add or remove MSSQL databases from a remote host.
 description:
    - Add or remove MSSQL databases from a remote host.
-version_added: "2.1"
+version_added: "2.2"
 options:
   name:
     description:
